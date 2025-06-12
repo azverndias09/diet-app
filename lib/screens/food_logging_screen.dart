@@ -40,17 +40,9 @@ class _FoodLoggingScreenState extends State<FoodLoggingScreen> {
                 String foodItem = _foodController.text;
                 double quantity = double.parse(_quantityController.text);
 
-                Map<String, dynamic> nutritionData =
-                    await _nutritionService.getNutritionData(foodItem);
-
-                FoodModel food = FoodModel(
-                  name: foodItem,
-                  quantity: quantity,
-                  calories: nutritionData['calories'],
-                  carbs: nutritionData['carbs'],
-                  proteins: nutritionData['proteins'],
-                  fats: nutritionData['fats'],
-                );
+                // Use fetchFoodDetails to get a fully populated FoodModel.
+                FoodModel food = await _nutritionService.fetchFoodDetails(
+                    foodItem, quantity);
 
                 String userId =
                     Provider.of<UserProvider>(context, listen: false).user!.id!;

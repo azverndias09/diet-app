@@ -31,13 +31,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           key: _formKey,
           child: ListView(
             children: [
+              // ... (other form fields)
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(labelText: 'Name'),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please enter your name';
-                  }
                   return null;
                 },
               ),
@@ -46,9 +46,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 decoration: InputDecoration(labelText: 'Age'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please enter your age';
-                  }
                   return null;
                 },
               ),
@@ -57,9 +56,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 decoration: InputDecoration(labelText: 'Height (cm)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please enter your height';
-                  }
                   return null;
                 },
               ),
@@ -68,56 +66,54 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                 decoration: InputDecoration(labelText: 'Weight (kg)'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please enter your weight';
-                  }
                   return null;
                 },
               ),
               DropdownButtonFormField<String>(
                 value: _gender,
                 decoration: InputDecoration(labelText: 'Gender'),
-                items: ['Male', 'Female', 'Other'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items: ['Male', 'Female', 'Other']
+                    .map((String value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        ))
+                    .toList(),
                 onChanged: (value) {
                   setState(() {
                     _gender = value;
                   });
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please select your gender';
-                  }
                   return null;
                 },
               ),
               DropdownButtonFormField<String>(
                 value: _activityLevel,
                 decoration: InputDecoration(labelText: 'Activity Level'),
-                items: ['Sedentary', 'Moderate', 'Active'].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                items: ['Sedentary', 'Moderate', 'Active']
+                    .map((String value) => DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        ))
+                    .toList(),
                 onChanged: (value) {
                   setState(() {
                     _activityLevel = value;
                   });
                 },
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
+                  if (value == null || value.isEmpty)
                     return 'Please select your activity level';
-                  }
                   return null;
                 },
               ),
+              // For Medical Conditions, we use onChanged instead of creating a new controller each build.
               TextFormField(
-                controller: TextEditingController(text: _medicalConditions),
+                initialValue: _medicalConditions,
                 decoration: InputDecoration(labelText: 'Medical Conditions'),
                 onChanged: (value) {
                   _medicalConditions = value;
@@ -127,10 +123,17 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
+                    // Ensure a minimal user exists in the provider
+                    final userProvider =
+                        Provider.of<UserProvider>(context, listen: false);
+                    if (userProvider.user == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text(
+                              'User not logged in. Please log in first.')));
+                      return;
+                    }
                     UserModel user = UserModel(
-                      id: Provider.of<UserProvider>(context, listen: false)
-                          .user!
-                          .id,
+                      id: userProvider.user!.id,
                       name: _nameController.text,
                       age: int.parse(_ageController.text),
                       gender: _gender,
@@ -141,8 +144,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     );
 
                     await FirestoreService().saveUserProfile(user);
-                    Provider.of<UserProvider>(context, listen: false)
-                        .setUser(user);
+                    userProvider.setUser(user);
 
                     Navigator.pushReplacementNamed(context, '/home');
                   }

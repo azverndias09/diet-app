@@ -6,6 +6,8 @@ import 'package:nutrition_tracker/screens/food_logging_screen.dart';
 import 'package:nutrition_tracker/screens/daily_insights_screen.dart';
 import 'package:nutrition_tracker/screens/feedback_screen.dart';
 import 'package:nutrition_tracker/screens/reports_screen.dart';
+import 'package:nutrition_tracker/screens/sign_in_screen.dart';
+import 'package:nutrition_tracker/screens/sign_up_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -27,8 +29,11 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        initialRoute: '/profile',
+        // Set the initial route to login.
+        initialRoute: '/login',
         routes: {
+          '/login': (context) => SignInScreen(),
+          '/signup': (context) => SignUpScreen(),
           '/profile': (context) => ProfileSetupScreen(),
           '/home': (context) => HomeScreen(),
           '/log': (context) => FoodLoggingScreen(),

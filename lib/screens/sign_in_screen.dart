@@ -3,23 +3,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:nutrition_tracker/services/auth_service.dart';
 import 'package:nutrition_tracker/models/user_model.dart';
 import 'package:nutrition_tracker/providers/user_provider.dart';
+import 'package:nutrition_tracker/services/firestore_service.dart';
 import 'package:provider/provider.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignInScreen extends StatefulWidget {
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  _SignInScreenState createState() => _SignInScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignInScreenState extends State<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
-  void _signUp() async {
+  void _signIn() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -27,21 +26,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
       });
 
       AuthService authService = AuthService();
-      User? firebaseUser = await authService.registerWithEmailAndPassword(
+      User? firebaseUser = await authService.signInWithEmailAndPassword(
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
 
       if (firebaseUser != null) {
-        // Set minimal user info in provider (only the uid for now)
-        Provider.of<UserProvider>(context, listen: false)
-            .setUser(UserModel(id: firebaseUser.uid));
-
-        // Navigate to profile setup screen to complete profile details.
-        Navigator.pushReplacementNamed(context, '/profile');
+        FirestoreService firestoreService = FirestoreService();
+        // Try to get an existing user profile.
+        UserModel? userProfile =
+            await firestoreService.getUserProfile(firebaseUser.uid);
+        if (userProfile == null) {
+          // No profile exists – create a minimal user and go to profile setup.
+          Provider.of<UserProvider>(context, listen: false)
+              .setUser(UserModel(id: firebaseUser.uid));
+          Navigator.pushReplacementNamed(context, '/profile');
+        } else {
+          // Profile exists – set the provider and navigate to Home.
+          Provider.of<UserProvider>(context, listen: false)
+              .setUser(userProfile);
+          Navigator.pushReplacementNamed(context, '/home');
+        }
       } else {
         setState(() {
-          _errorMessage = "Sign up failed. Please try again.";
+          _errorMessage = "Log in failed. Please check your credentials.";
         });
       }
       setState(() {
@@ -54,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up'),
+        title: Text('Log In'),
       ),
       body: Padding(
         padding: EdgeInsets.all(16),
@@ -86,32 +94,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 validator: (value) {
                   if (value == null || value.isEmpty)
                     return 'Please enter your password';
-                  if (value.length < 6)
-                    return 'Password must be at least 6 characters';
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Confirm Password'),
-                obscureText: true,
-                validator: (value) {
-                  if (value != _passwordController.text)
-                    return 'Passwords do not match';
                   return null;
                 },
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _isLoading ? null : _signUp,
+                onPressed: _isLoading ? null : _signIn,
                 child:
-                    _isLoading ? CircularProgressIndicator() : Text('Sign Up'),
+                    _isLoading ? CircularProgressIndicator() : Text('Log In'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/login');
+                  Navigator.pushReplacementNamed(context, '/signup');
                 },
-                child: Text('Already have an account? Log In'),
+                child: Text('Don\'t have an account? Sign Up'),
               )
             ],
           ),

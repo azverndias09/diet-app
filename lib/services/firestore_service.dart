@@ -4,18 +4,20 @@ import 'package:nutrition_tracker/models/food_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final CollectionReference _usersCollection =
+      FirebaseFirestore.instance.collection('users');
 
   Future<void> saveUserProfile(UserModel user) async {
-    await _firestore.collection('users').doc(user.id).set(user.toMap());
+    await _usersCollection.doc(user.id).set(user.toMap());
   }
 
-  Future<UserModel?> getUserProfile(String userId) async {
-    DocumentSnapshot doc =
-        await _firestore.collection('users').doc(userId).get();
+  Future<UserModel?> getUserProfile(String uid) async {
+    DocumentSnapshot doc = await _usersCollection.doc(uid).get();
     if (doc.exists) {
       return UserModel.fromMap(doc.data() as Map<String, dynamic>);
+    } else {
+      return null;
     }
-    return null;
   }
 
   Future<void> logFood(String userId, FoodModel food) async {
